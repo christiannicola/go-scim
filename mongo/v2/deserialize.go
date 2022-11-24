@@ -257,7 +257,7 @@ func (d *deserializer) deserializeDateTime(vr bsonrw.ValueReader) error {
 		return d.errReadDoc(err)
 	}
 
-	t := time.Unix(0, milliSeconds*int64(time.Millisecond))
+	t := time.Unix(0, milliSeconds*int64(time.Millisecond)).UTC()
 
 	if _, err := d.navigator.Current().Replace(t.Format(spec.ISO8601)); err != nil {
 		return err

@@ -130,8 +130,12 @@ func (s *serializer) serializeDateTimeProperty(property prop.Property) {
 
 	s.addName(0x09, property.Attribute())
 	// mongodb stores milliseconds
-	t, _ := time.Parse(spec.ISO8601, property.Raw().(string))
-	s.addInt64(t.Unix()*1000 + int64(t.Nanosecond()/1e6))
+	t, err := time.Parse(spec.ISO8601, property.Raw().(string))
+	if err != nil {
+		t, _ = time.Parse(time.RFC3339, property.Raw().(string))
+	}
+
+	s.addInt64(t.UTC().Unix()*1000 + int64(t.Nanosecond()/1e6))
 }
 
 func (s *serializer) serializeIntegerProperty(property prop.Property) {

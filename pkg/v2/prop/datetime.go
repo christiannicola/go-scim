@@ -2,8 +2,9 @@ package prop
 
 import (
 	"fmt"
-	"github.com/imulab/go-scim/pkg/v2/spec"
 	"time"
+
+	"github.com/imulab/go-scim/pkg/v2/spec"
 )
 
 // NewDateTime creates a new dateTime property associated with attribute.
@@ -109,9 +110,9 @@ func (p *dateTimeProperty) Replace(value interface{}) (*Event, error) {
 		return nil, fmt.Errorf("%w, value is incompatible with '%s'", spec.ErrInvalidValue, p.attr.Path())
 	}
 
-	t, err := p.fromISO8601(s)
+	t, err := p.parseTime(s)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w, value for %s neither conforms to RFC3339 not ISO8601", spec.ErrInvalidValue, p.attr.Path())
 	}
 
 	p.dirty = true
@@ -175,6 +176,14 @@ func (p *dateTimeProperty) fromISO8601(value string) (time.Time, error) {
 	return t, nil
 }
 
+func (p *dateTimeProperty) fromRFC3339(value string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("%w, value for '%s' does not conform to RFC3339", spec.ErrInvalidValue, p.attr.Path())
+	}
+	return t, nil
+}
+
 func (p *dateTimeProperty) EqualsTo(value interface{}) bool {
 	return p.compareThisAndValue(value, func(this time.Time, that time.Time) bool {
 		return this.Equal(that)
@@ -205,6 +214,15 @@ func (p *dateTimeProperty) LessThanOrEqualTo(value interface{}) bool {
 	})
 }
 
+func (p *dateTimeProperty) parseTime(s string) (time.Time, error) {
+	t, err := p.fromISO8601(s)
+	if err != nil {
+		return p.fromRFC3339(s)
+	}
+
+	return t, err
+}
+
 func (p *dateTimeProperty) compareThisAndValue(value interface{}, comparator func(this time.Time, that time.Time) bool) bool {
 	if p.value == nil || value == nil {
 		return false
@@ -215,7 +233,7 @@ func (p *dateTimeProperty) compareThisAndValue(value interface{}, comparator fun
 		return false
 	}
 
-	t, err := p.fromISO8601(s)
+	t, err := p.parseTime(s)
 	if err != nil {
 		return false
 	}
