@@ -245,7 +245,7 @@ func (t *transformer) coValue(attr *spec.Attribute, value *expr.Expression) prim
 		}
 	} else {
 		return primitive.Regex{
-			Pattern: "unquote(value.Token())",
+			Pattern: unquote(value.Token()),
 			Options: "i",
 		}
 	}
