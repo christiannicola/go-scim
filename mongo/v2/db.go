@@ -301,7 +301,7 @@ func (d *mongoDB) mongoProjection(projection *crud.Projection) bson.D {
 
 	if len(projection.ExcludedAttributes) > 0 {
 		exclude := bson.D{}
-		for _, p := range projection.Attributes {
+		for _, p := range projection.ExcludedAttributes {
 			if mp := d.mongoPathFor(p); len(mp) > 0 {
 				exclude = append(exclude, bson.E{Key: mp, Value: 0})
 			}
