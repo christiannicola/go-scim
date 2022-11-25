@@ -79,6 +79,13 @@ func (t traverser) traverseSelectedElements(query *expr.Expression) error {
 
 func (t traverser) traverseQualifiedElements(filter *expr.Expression) error {
 	return t.nav.ForEachChild(func(index int, child prop.Property) error {
+		// NOTE (c.nicola): There is the possibility of a removal operation.
+		//					The following check ensures that we don't try to read
+		//					out of bounds.
+		if index >= t.nav.Current().CountChildren() {
+			return nil
+		}
+
 		t.nav.At(index)
 		if err := t.nav.Error(); err != nil {
 			return err
