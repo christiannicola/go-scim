@@ -18,10 +18,7 @@ const (
 
 func (d *mongoDB) ensureIndex() {
 	d.superAttr.DFS(func(a *spec.Attribute) {
-		if a.Uniqueness() == spec.UniquenessNone {
-			return
-		}
-		if _, ok := a.Annotation(AnnotationMongoIndex); !ok {
+		if _, ok := a.Annotation(AnnotationMongoIndex); !ok && a.Uniqueness() == spec.UniquenessNone {
 			return
 		}
 
