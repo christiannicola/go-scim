@@ -200,8 +200,6 @@ func (p *PatchPayload) Validate() error {
 		case "remove":
 			if len(each.Path) == 0 {
 				return fmt.Errorf("%w: no path for remove operation", spec.ErrInvalidSyntax)
-			} else if len(each.Value) > 0 {
-				return fmt.Errorf("%w: value is unnecessary for remove operation", spec.ErrInvalidSyntax)
 			}
 		default:
 			return fmt.Errorf("%w: invalid patch operation", spec.ErrInvalidSyntax)
