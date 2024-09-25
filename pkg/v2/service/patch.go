@@ -115,6 +115,13 @@ func (s *patchService) Do(ctx context.Context, req *PatchRequest) (resp *PatchRe
 				return nil, err
 			}
 		case "replace":
+			if len(patchOp.Path) == 0 && len(patchOp.Value) > 0 {
+				patchOp.Value, err = makePropertiesAADCompatible(patchOp.Value)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			if valueToReplace, err := patchOp.ParseValue(resource); err != nil {
 				return nil, err
 			} else if err := crud.Replace(resource, patchOp.Path, valueToReplace); err != nil {
@@ -253,4 +260,30 @@ func (o *PatchOperation) getTargetAttribute(parentAttr *spec.Attribute, cursor *
 	}
 
 	return o.getTargetAttribute(parentAttr.SubAttributeForName(cursor.Token()), cursor.Next())
+}
+
+func makePropertiesAADCompatible(raw json.RawMessage) (json.RawMessage, error) {
+	input := map[string]interface{}{}
+
+	if err := json.Unmarshal(raw, &input); err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+
+	for k, v := range input {
+		if strings.Contains(k, ".") {
+			parts := strings.SplitN(k, ".", 2)
+			if _, ok := result[parts[0]]; !ok {
+				result[parts[0]] = make(map[string]interface{})
+			}
+
+			subProp, _ := result[parts[0]].(map[string]interface{})
+			subProp[parts[1]] = v
+		} else {
+			result[k] = v
+		}
+	}
+
+	return json.Marshal(result)
 }

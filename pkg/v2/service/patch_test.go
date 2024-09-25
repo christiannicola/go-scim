@@ -3,6 +3,11 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"os"
+	"strings"
+	"testing"
+
 	"github.com/imulab/go-scim/pkg/v2/crud"
 	"github.com/imulab/go-scim/pkg/v2/db"
 	"github.com/imulab/go-scim/pkg/v2/prop"
@@ -12,10 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
-	"io/ioutil"
-	"os"
-	"strings"
-	"testing"
 )
 
 func TestPatchService(t *testing.T) {
@@ -413,7 +414,7 @@ func (s *PatchServiceTestSuite) SetupSuite() {
 		f, err := os.Open(each.filepath)
 		require.Nil(s.T(), err)
 
-		raw, err := ioutil.ReadAll(f)
+		raw, err := io.ReadAll(f)
 		require.Nil(s.T(), err)
 
 		err = json.Unmarshal(raw, each.structure)
@@ -432,4 +433,25 @@ func (s *PatchServiceTestSuite) SetupSuite() {
   }
 }
 `), s.config))
+}
+
+func Test_MakePropertiesAADCompatible(t *testing.T) {
+	t.Parallel()
+
+	t.Run("convert sub properties correctly", func(t *testing.T) {
+		raw := json.RawMessage(`{"displayName":"abc","name.familyName":"cde","name.givenName":"fgh"}`)
+		res, err := makePropertiesAADCompatible(raw)
+		assert.NoError(t, err)
+
+		expected := json.RawMessage(`{"displayName":"abc","name":{"familyName":"cde","givenName":"fgh"}}`)
+		assert.Equal(t, string(expected), string(res))
+	})
+
+	t.Run("don't touch operations that are formed correctly", func(t *testing.T) {
+		raw := json.RawMessage(`{"displayName":"Terry","externalId":"11111"}`)
+		res, err := makePropertiesAADCompatible(raw)
+		assert.NoError(t, err)
+
+		assert.Equal(t, string(raw), string(res))
+	})
 }
