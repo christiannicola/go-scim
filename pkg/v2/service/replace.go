@@ -3,13 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/imulab/go-scim/pkg/v2/db"
 	"github.com/imulab/go-scim/pkg/v2/json"
 	"github.com/imulab/go-scim/pkg/v2/prop"
 	"github.com/imulab/go-scim/pkg/v2/service/filter"
 	"github.com/imulab/go-scim/pkg/v2/spec"
-	"io"
-	"io/ioutil"
 )
 
 // ReplaceService returns a replace service.
@@ -81,9 +81,11 @@ func (s *replaceService) Do(ctx context.Context, req *ReplaceRequest) (resp *Rep
 		newVersion = replacement.MetaVersionOrEmpty()
 		oldVersion = ref.MetaVersionOrEmpty()
 	)
+
 	if newVersion == oldVersion {
 		resp = &ReplaceResponse{
 			Replaced: false,
+			Resource: replacement,
 			Ref:      ref,
 		}
 		return
@@ -106,7 +108,7 @@ func (s *replaceService) parseResource(req *ReplaceRequest) (*prop.Resource, err
 		return nil, fmt.Errorf("%w: no payload for replace service", spec.ErrInternal)
 	}
 
-	raw, err := ioutil.ReadAll(req.PayloadSource)
+	raw, err := io.ReadAll(req.PayloadSource)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to read request body", spec.ErrInternal)
 	}
