@@ -107,6 +107,13 @@ func (s *patchService) Do(ctx context.Context, req *PatchRequest) (resp *PatchRe
 	}
 
 	for _, patchOp := range patch.Operations {
+		if len(patchOp.Path) == 0 && len(patchOp.Value) > 0 {
+			patchOp.Value, err = makePropertiesAADCompatible(patchOp.Value)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		switch strings.ToLower(patchOp.Op) {
 		case "add":
 			if valueToAdd, err := patchOp.ParseValue(resource); err != nil {
@@ -115,12 +122,6 @@ func (s *patchService) Do(ctx context.Context, req *PatchRequest) (resp *PatchRe
 				return nil, err
 			}
 		case "replace":
-			if len(patchOp.Path) == 0 && len(patchOp.Value) > 0 {
-				patchOp.Value, err = makePropertiesAADCompatible(patchOp.Value)
-				if err != nil {
-					return nil, err
-				}
-			}
 
 			if valueToReplace, err := patchOp.ParseValue(resource); err != nil {
 				return nil, err
