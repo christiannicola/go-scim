@@ -358,6 +358,57 @@ func (s *PatchServiceTestSuite) TestDo() {
 				assert.Equal(t, "6546579", resp.Resource.Navigator().Dot("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User").Dot("employeeNumber").Current().Raw())
 			},
 		},
+		{
+			name: "patch a field in the schema extension (manager)",
+			setup: func(t *testing.T) Patch {
+				database := db.Memory()
+				err := database.Insert(context.TODO(), s.resourceOf(t, map[string]interface{}{
+					"schemas": []interface{}{
+						"urn:ietf:params:scim:schemas:core:2.0:User",
+						"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+					},
+					"id": "foo",
+					"meta": map[string]interface{}{
+						"resourceType": "User",
+						"created":      "2019-11-20T13:09:00",
+						"lastModified": "2019-11-20T13:09:00",
+						"location":     "https://identity.imulab.io/Users/foo",
+						"version":      "W/\"1\"",
+					},
+					"userName": "foo",
+					"emails": []interface{}{
+						map[string]interface{}{
+							"value": "foo@bar.com",
+							"type":  "home",
+						},
+					},
+					"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": map[string]interface{}{
+						"manager": "111111111",
+					},
+				}))
+				require.Nil(t, err)
+				return PatchService(s.config, database, nil, []filter.ByResource{
+					filter.ByPropertyToByResource(
+						filter.ReadOnlyFilter(),
+						filter.BCryptFilter(),
+					),
+					filter.ByPropertyToByResource(filter.ValidationFilter(database)),
+					filter.MetaFilter(),
+				})
+			},
+			getRequest: func() *PatchRequest {
+				return &PatchRequest{
+					ResourceID:    "foo",
+					PayloadSource: strings.NewReader(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"op":"add","path":"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager","value":"7888b4d3-1f9d-4833-9f9c-859277e8ef82"}]}`),
+				}
+			},
+			expect: func(t *testing.T, resp *PatchResponse, err error) {
+				assert.Nil(t, err)
+				require.NotNil(t, resp)
+				assert.True(t, resp.Patched)
+				assert.Equal(t, "7888b4d3-1f9d-4833-9f9c-859277e8ef82", resp.Resource.Navigator().Dot("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User").Dot("manager").Current().Raw())
+			},
+		},
 	}
 
 	for _, test := range tests {
