@@ -454,4 +454,12 @@ func Test_MakePropertiesAADCompatible(t *testing.T) {
 
 		assert.Equal(t, string(raw), string(res))
 	})
+
+	t.Run("don't mangle enterprise extensions", func(t *testing.T) {
+		raw := json.RawMessage(`{"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User":{"manager":"123456"}}`)
+		res, err := makePropertiesAADCompatible(raw)
+		assert.NoError(t, err)
+
+		assert.Equal(t, string(raw), string(res))
+	})
 }
