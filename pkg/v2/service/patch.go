@@ -273,7 +273,7 @@ func makePropertiesAADCompatible(raw json.RawMessage) (json.RawMessage, error) {
 	result := make(map[string]interface{})
 
 	for k, v := range input {
-		if strings.Contains(k, ".") {
+		if strings.Contains(k, ".") && !strings.Contains(k, "extension:enterprise") {
 			parts := strings.SplitN(k, ".", 2)
 			if _, ok := result[parts[0]]; !ok {
 				result[parts[0]] = make(map[string]interface{})
