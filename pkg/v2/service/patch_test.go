@@ -359,7 +359,7 @@ func (s *PatchServiceTestSuite) TestDo() {
 			},
 		},
 		{
-			name: "patch a field in the schema extension (manager)",
+			name: "patch a field in the schema extension (employeeNumber)",
 			setup: func(t *testing.T) Patch {
 				database := db.Memory()
 				err := database.Insert(context.TODO(), s.resourceOf(t, map[string]interface{}{
@@ -383,7 +383,7 @@ func (s *PatchServiceTestSuite) TestDo() {
 						},
 					},
 					"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": map[string]interface{}{
-						"manager": "111111111",
+						"employeeNumber": "111111111",
 					},
 				}))
 				require.Nil(t, err)
@@ -399,14 +399,14 @@ func (s *PatchServiceTestSuite) TestDo() {
 			getRequest: func() *PatchRequest {
 				return &PatchRequest{
 					ResourceID:    "foo",
-					PayloadSource: strings.NewReader(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"op":"add","path":"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager","value":"7888b4d3-1f9d-4833-9f9c-859277e8ef82"}]}`),
+					PayloadSource: strings.NewReader(`{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"op":"add","path":"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber","value":"7888b4d3-1f9d-4833-9f9c-859277e8ef82"}]}`),
 				}
 			},
 			expect: func(t *testing.T, resp *PatchResponse, err error) {
 				assert.Nil(t, err)
 				require.NotNil(t, resp)
 				assert.True(t, resp.Patched)
-				assert.Equal(t, "7888b4d3-1f9d-4833-9f9c-859277e8ef82", resp.Resource.Navigator().Dot("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User").Dot("manager").Current().Raw())
+				assert.Equal(t, "7888b4d3-1f9d-4833-9f9c-859277e8ef82", resp.Resource.Navigator().Dot("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User").Dot("employeeNumber").Current().Raw())
 			},
 		},
 	}
@@ -507,7 +507,7 @@ func Test_MakePropertiesAADCompatible(t *testing.T) {
 	})
 
 	t.Run("don't mangle enterprise extensions", func(t *testing.T) {
-		raw := json.RawMessage(`{"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User":{"manager":"123456"}}`)
+		raw := json.RawMessage(`{"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User":{"employeeNumber":"123456"}}`)
 		res, err := makePropertiesAADCompatible(raw)
 		assert.NoError(t, err)
 
